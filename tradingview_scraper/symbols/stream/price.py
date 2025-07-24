@@ -257,11 +257,9 @@ class RealTimeData:
         try:
             while True:
                 try:
-                    sleep(1)
                     result = self.ws.recv()
                     # Check if the result is a heartbeat or actual data
                     if re.match(r"~m~\d+~m~~h~\d+$", result):
-                        self.ws.recv()  # Echo back the message
                         logging.debug(f"Received heartbeat: {result}")
                         self.ws.send(result)
                     else:
