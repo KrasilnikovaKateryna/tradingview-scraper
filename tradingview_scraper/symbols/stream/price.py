@@ -175,7 +175,7 @@ class RealTimeData:
         self._initialize_sessions(quote_session, chart_session)
         self._add_symbol_to_sessions(quote_session, chart_session, exchange_symbol, timeframe_min)
         
-        return self.get_data()
+        return chart_session
 
     def _initialize_sessions(self, quote_session: str, chart_session: str):
         """
