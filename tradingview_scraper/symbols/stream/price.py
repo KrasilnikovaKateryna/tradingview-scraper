@@ -1,5 +1,5 @@
 """Module providing a two function which return python generator contains trades realtime data."""
-
+import os
 import re
 import json
 from typing import List
@@ -276,10 +276,10 @@ class RealTimeData:
 
                 except WebSocketConnectionClosedException:
                     logging.error("WebSocket connection closed. Attempting to reconnect...")
-                    break  # Handle reconnection logic as needed
+                    os._exit(1)
                 except Exception as e:
                     logging.error(f"An error occurred: {e}")
-                    break  # Handle other exceptions as needed
+                    os._exit(1)
         finally:
             self.ws.close()
 
