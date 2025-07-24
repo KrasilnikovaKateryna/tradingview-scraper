@@ -157,7 +157,7 @@ class RealTimeData:
             logging.error("Failed to send message: %s", e)
         
     
-    def get_ohlcv(self, exchange_symbol: str):
+    def get_ohlcv(self, exchange_symbol: str, timeframe_min: int):
         """
         Returns a generator that yields OHLC data for a specified symbol in real-time.
 
@@ -173,7 +173,7 @@ class RealTimeData:
         logging.info(f"Quote session generated: {quote_session}, Chart session generated: {chart_session}")
 
         self._initialize_sessions(quote_session, chart_session)
-        self._add_symbol_to_sessions(quote_session, chart_session, exchange_symbol)
+        self._add_symbol_to_sessions(quote_session, chart_session, exchange_symbol, timeframe_min)
         
         return self.get_data()
 
@@ -201,14 +201,14 @@ class RealTimeData:
                 "pro_name", "short_name", "type", "update_mode", "volume", 
                 "currency_code", "rchp", "rtc"]
 
-    def _add_symbol_to_sessions(self, quote_session: str, chart_session: str, exchange_symbol: str):
+    def _add_symbol_to_sessions(self, quote_session: str, chart_session: str, exchange_symbol: str, timeframe_min: int):
         """
         Adds the specified symbol to the quote and chart sessions.
         """
         resolve_symbol = json.dumps({"adjustment": "splits", "symbol": exchange_symbol})
         self.send_message("quote_add_symbols", [quote_session, f"={resolve_symbol}"])
         self.send_message("resolve_symbol", [chart_session, "sds_sym_1", f"={resolve_symbol}"])
-        self.send_message("create_series", [chart_session, "sds_1", "s1", "sds_sym_1", "1", 10, ""])
+        self.send_message("create_series", [chart_session, "sds_1", "s1", "sds_sym_1", str(timeframe_min), 10, ""])
         self.send_message("quote_fast_symbols", [quote_session, exchange_symbol])
         self.send_message("create_study", [chart_session, "st1", "st1", "sds_1", 
                             "Volume@tv-basicstudies-246", {"length": 20, "col_prev_close": "false"}])
@@ -268,7 +268,11 @@ class RealTimeData:
                         split_result = [x for x in re.split(r'~m~\d+~m~', result) if x]
                         for item in split_result:
                             if item:
-                                yield json.loads(item)  # Yield parsed JSON data
+                                try:
+                                    yield json.loads(item)  # Yield parsed JSON data
+                                except Exception as e:
+                                    logging.error(f"Failed to parse JSON data: {item} - Error: {e}")
+                                    continue
 
                 except WebSocketConnectionClosedException:
                     logging.error("WebSocket connection closed. Attempting to reconnect...")
